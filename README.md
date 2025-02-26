@@ -50,5 +50,5 @@ terramate run --sync-drift-status --terraform-plan-file=drift.tfplan --continue-
 To resolve only stacks with drift, we can run a new command:
 
 ```bash
-
+terramate run --status drifted -- terraform apply drift.tfplan
 ```
