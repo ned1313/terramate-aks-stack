@@ -9,8 +9,3 @@ variable "environment" {
   description = "Environment to deploy (dev, test, prod)."
   default     = "dev"
 }
-
-variable "vnet_subnet_id" {
-  type        = string
-  description = "ID of the subnet to deploy the AKS cluster into."
-}

@@ -13,10 +13,20 @@ resource "random_id" "name" {
   byte_length = 8
 }
 
+data "terraform_remote_state" "network" {
+  backend = "azurerm"
+  config = {
+    storage_account_name = "terramateaksstack42"
+    container_name       = "tfstate"
+    resource_group_name  = "terramate-aks-stack"
+    key                  = "networking.tfstate"
+  }
+}
+
 
 module "cluster" {
   source  = "Azure/aks/azurerm"
-  version = "8.0.0"
+  version = "9.4.1"
 
   # Cluster base config
   resource_group_name     = azurerm_resource_group.main.name
@@ -31,7 +41,7 @@ module "cluster" {
   agents_min_count          = 3
 
   # Cluster networking
-  vnet_subnet_id = var.vnet_subnet_id
+  vnet_subnet_id = data.terraform_remote_state.network.outputs.aks_subnet_id
   network_plugin = "azure"
 
   # Cluster node pools
@@ -42,7 +52,7 @@ module "cluster" {
       enable_auto_scaling = true
       max_count           = 4
       min_count           = 1
-      vnet_subnet_id      = var.vnet_subnet_id
+      vnet_subnet_id      = data.terraform_remote_state.network.outputs.aks_subnet_id
       zones               = [1, 2, 3]
     }
   }

@@ -5,4 +5,10 @@ terraform {
       version = "~> 3.0"
     }
   }
+  backend "azurerm" {
+    storage_account_name = "terramateaksstack42"
+    container_name       = "tfstate"
+    resource_group_name  = "terramate-aks-stack"
+    key                  = "networking.tfstate"
+  }
 }

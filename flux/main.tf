@@ -1,9 +1,19 @@
 provider "helm" {
   kubernetes {
-    host                   = "https://${var.cluster_fqdn}"
-    client_certificate     = base64decode(var.client_certificate)
-    client_key             = base64decode(var.client_key)
-    cluster_ca_certificate = base64decode(var.cluster_ca_certificate)
+    host                   = "https://${data.terraform_remote_state.aks.outputs.host}"
+    client_certificate     = base64decode(data.terraform_remote_state.aks.outputs.client_certificate)
+    client_key             = base64decode(data.terraform_remote_state.aks.outputs.client_key)
+    cluster_ca_certificate = base64decode(data.terraform_remote_state.aks.outputs.cluster_ca_certificate)
+  }
+}
+
+data "terraform_remote_state" "aks" {
+  backend = "azurerm"
+  config = {
+    storage_account_name = "terramateaksstack42"
+    container_name       = "tfstate"
+    resource_group_name  = "terramate-aks-stack"
+    key                  = "aks.tfstate"
   }
 }
 
