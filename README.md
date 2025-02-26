@@ -50,5 +50,19 @@ terramate run --sync-drift-status --terraform-plan-file=drift.tfplan --continue-
 To resolve only stacks with drift, we can run a new command:
 
 ```bash
-terramate run --status drifted -- terraform apply drift.tfplan
+terramate run --status drifted --sync-drift-status -- terraform apply drift.tfplan
 ```
+
+Now that we have this basic setup done, we can automate the process through GitHub Actions.
+
+What we need to do:
+
+* create the workflows folder
+* create a workflow that handles pull requests
+* create a workflow that handles merges to main
+* create a workflow that handles drift detection on a schedule
+* Update the repository with an API key for talking to Terramate Cloud
+  `gh secret set TMC_TOKEN --body`
+* Update the repository with an OIDC config for Azure (use this module for creating a federated identity if you need one)
+  
+
