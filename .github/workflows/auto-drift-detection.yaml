@@ -60,7 +60,7 @@ jobs:
                   --terraform-plan-file=drift.tfplan \
                   --continue-on-error \
                   --parallel 5 \
-                  -v --log-level=debug \
+                  -v --log-level=debug -X \
                   -- terraform plan -out=drift.tfplan -detailed-exitcode -lock-false
               env:
                 GITHUB_TOKEN: ${{ github.token }}
