@@ -58,11 +58,15 @@ Now that we have this basic setup done, we can automate the process through GitH
 What we need to do:
 
 * create the workflows folder
-* create a workflow that handles pull requests
-* create a workflow that handles merges to main
 * create a workflow that handles drift detection on a schedule
 * Update the repository with an API key for talking to Terramate Cloud
   `gh secret set TMC_TOKEN --body`
 * Update the repository with an OIDC config for Azure (use this module for creating a federated identity if you need one)
-  
+  `gh secret set AZURE_CLIENT_ID --body`
+  `gh secret set AZURE_TENANT_ID --body`
+  `gh secret set AZURE_SUBSCRIPTION_ID --body`
 
+Now we can automate the PR and merge for the stack
+
+* create a workflow that handles pull requests
+* create a workflow that handles merges to main
