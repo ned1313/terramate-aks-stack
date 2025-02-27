@@ -6,9 +6,10 @@ terraform {
     }
   }
   backend "azurerm" {
-    storage_account_name = "terramateaksstack42"
+    storage_account_name = "tmc30374sa"
     container_name       = "tfstate"
-    resource_group_name  = "terramate-aks-stack"
+    resource_group_name  = "tmc-30374-rg"
     key                  = "networking.tfstate"
+    use_azuread_auth = true
   }
 }

@@ -1,0 +1,69 @@
+name: Auto Drift Detection
+
+on:
+    schedule:
+        # Runs every 6 hours
+        - cron: '0 */6 * * *'
+    workflow_dispatch:  # Allows manual triggering
+
+jobs:
+    drift-detection:
+        name: Check Drift
+
+        runs-on: ubuntu-latest
+
+        permissions:
+            contents: read  # Read access to the repository contents
+            id-token: write  # Write access to the ID token
+            pull-requests: read  # Read access to pull requests
+            checks: read  # Read access to checks
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+              with:
+                ref: ${{ github.head_ref }}
+                fetch-depth: 0  # Fetch all history for all branches and tags
+
+            - name: Install Terramate
+              uses: terramate-io/terramate-action@v2
+
+            - name: Install Terraform
+              uses: hashicorp/setup-terraform@v3
+              with:
+                terraform_version: 1.10.5
+                terraform_wrapper: false
+
+            - name: 'Configure Azure credentials'
+              uses: azure/login@v2
+              with:
+                client-id: ${{ secrets.AZURE_CLIENT_ID }}
+                tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+                subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+            - name: Run Terraform init on all stacks
+              run: |
+                terramate run \
+                  --parallel 1 \
+                  -- terraform init -lock-timeout=5m
+              env:
+                GITHUB_TOKEN: ${{ github.token }}
+                ARM_USE_OIDC: true
+                ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+                ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+                ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+            - name: Run Drift Detection
+              run: |
+                terramate run \
+                  --sync-drift-status \
+                  --terraform-plan-file=drift.tfplan \
+                  --continue-on-error \
+                  --parallel 5 \
+                  -- terraform plan -out=drift.tfplan -detailed-exitcode -lock-false
+              env:
+                GITHUB_TOKEN: ${{ github.token }}
+                ARM_USE_OIDC: true
+                ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+                ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+                ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}

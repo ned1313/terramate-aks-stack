@@ -9,11 +9,13 @@ provider "helm" {
 
 data "terraform_remote_state" "aks" {
   backend = "azurerm"
+
   config = {
-    storage_account_name = "terramateaksstack42"
+    storage_account_name = "tmc30374sa"
     container_name       = "tfstate"
-    resource_group_name  = "terramate-aks-stack"
+    resource_group_name  = "tmc-30374-rg"
     key                  = "aks.tfstate"
+    use_azuread_auth = true
   }
 }
 
