@@ -10,6 +10,6 @@ terraform {
     container_name       = "tfstate"
     resource_group_name  = "tmc-30374-rg"
     key                  = "networking.tfstate"
-    use_azuread_auth = true
+    use_azuread_auth     = true
   }
 }
