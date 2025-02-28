@@ -108,6 +108,7 @@ jobs:
             --continue-on-error \
             --sync-drift-status \
             --terraform-plan-file=drift.tfplan \
+            -X \
             -- \
             terraform plan -out drift.tfplan -detailed-exitcode
         env:
