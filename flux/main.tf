@@ -15,7 +15,7 @@ data "terraform_remote_state" "aks" {
     container_name       = "tfstate"
     resource_group_name  = "tmc-30374-rg"
     key                  = "aks.tfstate"
-    use_azuread_auth = true
+    use_azuread_auth     = true
   }
 }
 
