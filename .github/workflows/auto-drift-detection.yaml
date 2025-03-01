@@ -71,7 +71,7 @@ jobs:
                   --terraform-plan-file=drift.tfplan \
                   --continue-on-error \
                   --parallel 5 \
-                  -v --log-level=debug -X \
+                  -X \
                   -- terraform plan -out=drift.tfplan -detailed-exitcode -lock=false
               env:
                 GITHUB_TOKEN: ${{ github.token }}
@@ -88,7 +88,7 @@ jobs:
                   --sync-deployment \
                   --terraform-plan-file=drift.tfplan \
                   --parallel 5 \
-                  -v --log-level=debug -X \
+                  -X \
                   -- terraform apply drift.tfplan
               env:
                 GITHUB_TOKEN: ${{ github.token }}
