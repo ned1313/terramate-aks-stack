@@ -81,7 +81,7 @@ jobs:
                 ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
             - name: Remediate Drift
-              if: ${{ github.event.inputs.remediate == true }}
+              if: github.event.inputs.remediate
               run: |
                 terramate run \
                   --status=drifted \
