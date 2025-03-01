@@ -5,6 +5,17 @@ on:
         # Runs every 6 hours
         - cron: '0 */6 * * *'
     workflow_dispatch:  # Allows manual triggering
+      inputs:
+        remediate:
+          description: 'Environment to run against'
+          required: false
+          default: false
+          type: boolean
+        message:
+          description: 'Message for the run'
+          required: false
+          type: string
+      
 
 jobs:
     drift-detection:
@@ -62,6 +73,23 @@ jobs:
                   --parallel 5 \
                   -v --log-level=debug -X \
                   -- terraform plan -out=drift.tfplan -detailed-exitcode -lock=false
+              env:
+                GITHUB_TOKEN: ${{ github.token }}
+                ARM_USE_OIDC: true
+                ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+                ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+                ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+            - name: Remediate Drift
+              if: ${{ github.event.inputs.remediate == true }}
+              run: |
+                terramate run \
+                  --status=drifted \
+                  --sync-deployment \
+                  --terraform-plan-file=drift.tfplan \
+                  --parallel 5 \
+                  -v --log-level=debug -X \
+                  -- terraform apply drift.tfplan
               env:
                 GITHUB_TOKEN: ${{ github.token }}
                 ARM_USE_OIDC: true
