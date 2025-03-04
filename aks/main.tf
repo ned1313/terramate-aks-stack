@@ -7,6 +7,10 @@ resource "azurerm_resource_group" "main" {
   name     = "${var.environment}-aks-env-out"
   location = var.location
 
+  tags = {
+    environment = var.environment
+  }
+
 }
 
 resource "random_id" "name" {
