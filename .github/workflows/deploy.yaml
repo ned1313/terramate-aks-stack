@@ -1,0 +1,119 @@
+name: Terraform Deployment
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy Terraform changes in changed Terramate stacks
+
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: read
+      checks: read
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Install Terramate
+        uses: terramate-io/terramate-action@v2
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.10.5
+          terraform_wrapper: false
+
+      - name: List changed stacks
+        id: list
+        run: terramate list --changed
+
+      - name: Configure Azure credentials
+        if: steps.list.outputs.stdout
+        id: auth
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Run Terraform init in each changed stacks
+        if: steps.list.outputs.stdout
+        id: init
+        run: |
+          terramate run \
+            --parallel 1 \
+            --changed \
+            -- \
+            terraform init
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          ARM_USE_OIDC: true
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Create Terraform plan on changed stacks
+        if: steps.list.outputs.stdout
+        id: plan
+        run: |
+          terramate run \
+            --parallel 5 \
+            --changed \
+            -X \
+            -- \
+            terraform plan -lock-timeout=5m -out out.tfplan
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          ARM_USE_OIDC: true
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Apply planned changes on changed stacks
+        if: steps.list.outputs.stdout
+        id: apply
+        run: |
+          terramate run \
+            --parallel 5 \
+            --changed \
+            --sync-deployment \
+            --terraform-plan-file=out.tfplan \
+            -X \
+            -- \
+            terraform apply -input=false -auto-approve -lock-timeout=5m out.tfplan
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          ARM_USE_OIDC: true
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Run drift detection
+        if: steps.list.outputs.stdout && ! cancelled() && steps.apply.outcome != 'skipped'
+        id: drift
+        run: |
+          terramate run \
+            --parallel 5 \
+            --changed \
+            --continue-on-error \
+            --sync-drift-status \
+            --terraform-plan-file=drift.tfplan \
+            -X \
+            -- \
+            terraform plan -out drift.tfplan -detailed-exitcode
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          ARM_USE_OIDC: true
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
