@@ -1,7 +1,7 @@
 terramate {
-    config {
-        cloud {
-            organization = "globomantics"
-        }
+  config {
+    cloud {
+      organization = "globomantics"
     }
+  }
 }
